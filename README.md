@@ -17,7 +17,8 @@ python3 src/app.py
 
 ## Tasks
 - Create a new **public** repository and use this one as a template.
-- Containerize the Python application in the `src/` directory. Create a Dockerfile and push it in your repository. Use ubuntu as a base image.
+- Containerize the Python application in the `src/` directory. Create a Dockerfile and use ubuntu as a base image.
+- Validate locally that the container is working.
 - Create a GitHub Actions workflow that builds the Docker image and publishes it to your personal DockerHub account on every push to the main branch.
 
 ### Bonus
