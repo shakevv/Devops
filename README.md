@@ -7,7 +7,7 @@ You are given a Python application and a client has requested your help to run i
 Install necessary dependencies
 
 ```bash
-pip3 install src/requirements.txt
+pip3 install -r src/requirements.txt
 ```
 Start the application
 
@@ -17,7 +17,7 @@ python3 src/app.py
 
 ## Tasks
 - Create a new **public** repository and use this one as a template.
-- Containerize the Python application in the `src/` directory. Create a Dockerfile and push it in your repository.
+- Containerize the Python application in the `src/` directory. Create a Dockerfile and push it in your repository. Use ubuntu as a base image.
 - Create a GitHub Actions workflow that builds the Docker image and publishes it to your personal DockerHub account on every push to the main branch.
 
 ### Bonus
