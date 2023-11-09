@@ -35,7 +35,6 @@ jobs:
       - name: Build and Export to Docker
         uses: docker/build-push-action@v5
         with:
-          context: .
           load: true
           tags: ${{ env.TEST_TAG }}
 
@@ -46,6 +45,5 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
-          context: .
           push: true
           tags: ${{ env.LATEST_TAG }}
