@@ -2,15 +2,87 @@ name: Build and Push Docker Image to Docker Hub
 
 on:
   push:
-    branches: [ "main" ]
+    branches:
+      - main
+   pull_request:
+    branches:
+      - main
 
 env:
   TEST_TAG: ${{ secrets.DOCKER_USERNAME }}/${{ github.event.repository.name }}:test
   LATEST_TAG: ${{ secrets.DOCKER_USERNAME }}/${{ github.event.repository.name }}:latest
+  PYTHON_VERSION: 3.9
+  UBUNTU_VERSION: 23.10
 
 jobs:
-  docker:
-    runs-on: ubuntu-latest
+
+  unit-testing: 
+    runs-on: ubuntu-{{ UBUNTU_VERSION }}
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:  
+          python-version: ${{ PYTHON_VERSION }}
+
+      - name: Upgrade Pip
+        run: |
+          python -m pip install --upgrade pip
+
+      - name: Install Code Style Dependencies
+        run: |
+        pip3 install flake8
+
+      - name: Run Flake8
+        run: flake8 --exclude=src/requirements.txt src
+
+      - name: Run Editor Config Checker
+        uses: editorconfig-checker/action-editorconfig-checker@main
+        run: editorconfig-checker
+
+      - name: Run Markdown Lint
+        uses: actions/setup-node@v4
+        run: |
+          npm i -g cli-markdown
+          md README.md
+
+  unit-testing:
+    runs-on: ubuntu-{{ UBUNTU_VERSION }}
+
+     permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:  
+          python-version: ${{ PYTHON_VERSION }}
+
+      - name: Install Project Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then 
+            pip3 install -r src/requirements.txt
+          fi 
+      
+      - name: Run Unit Tests
+        run: |
+          python3 -m unittest src/app_test.py
+
+
+  docker-push:
+    runs-on: ubuntu-{{ UBUNTU_VERSION }}
 
     permissions:
       contents: read
