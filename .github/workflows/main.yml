@@ -17,7 +17,7 @@ env:
 jobs:
 
   code-style-check: 
-    runs-on: ubuntu-{{ UBUNTU_VERSION }}
+    runs-on: ubuntu-${{ env.UBUNTU_VERSION }}
 
     permissions:
       contents: read
@@ -30,7 +30,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:  
-          python-version: '{{ env.PYTHON_VERSION }}'
+          python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Upgrade Pip
         run: |
@@ -55,7 +55,7 @@ jobs:
           md README.md
 
   unit-testing:
-    runs-on: ubuntu-{{ UBUNTU_VERSION }}
+    runs-on: ubuntu-${{ env.UBUNTU_VERSION }}
 
     permissions:
       contents: read
@@ -68,7 +68,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:  
-          python-version: '{{ env.PYTHON_VERSION }}'
+          python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Install Project Dependencies
         run: |
@@ -83,7 +83,7 @@ jobs:
 
   docker-push:
     needs: [unit-testing, code-style-check]
-    runs-on: ubuntu-{{ UBUNTU_VERSION }}
+    runs-on: ubuntu-${{ env.UBUNTU_VERSION }}
 
     permissions:
       contents: read
