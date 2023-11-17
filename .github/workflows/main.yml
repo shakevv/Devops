@@ -82,6 +82,7 @@ jobs:
           python3 -m unittest src/app_test.py
 
   docker-push:
+    needs: [unit-testing, code-style-check]
     runs-on: ubuntu-{{ UBUNTU_VERSION }}
 
     permissions:
