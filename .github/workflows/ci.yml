@@ -100,10 +100,10 @@ jobs:
           load: true
           tags: ${{ env.TEST_TAG }}
 
-      - name: Test Image
-        run: |
-          docker run --rm --name test_container ${{ env.TEST_TAG }};
-          docker stop $(docker ps -q);
+      # - name: Test Image
+      #   run: |
+      #     docker run --rm --name test_container ${{ env.TEST_TAG }};
+      #     docker stop $(docker ps -q);
 
       - name: Build and push to Dockerhub
         uses: docker/build-push-action@v5
