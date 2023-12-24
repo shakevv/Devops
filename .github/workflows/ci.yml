@@ -28,7 +28,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:  
-          python-version: 3.9
+          python-version: 3.12
 
       - name: Upgrade Pip
         run: |
@@ -66,7 +66,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:  
-          python-version: 3.9
+          python-version: 3.12
 
       - name: Install Project Dependencies
         run: |
@@ -77,7 +77,7 @@ jobs:
       
       - name: Run Unit Tests
         run: |
-          python3 -m unittest src/app_test.py
+          python src/app_test.py
 
   docker-push:
     needs: [unit-testing, code-style-check]
