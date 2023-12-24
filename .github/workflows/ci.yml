@@ -9,8 +9,8 @@ on:
       - main
 
 env:
-  TEST_TAG: ${{ secrets.DOCKER_USERNAME }}/${{ github.event.repository.name }}:test
-  LATEST_TAG: ${{ secrets.DOCKER_USERNAME }}/${{ github.event.repository.name }}:latest
+  TEST_TAG: ${{ secrets.DOCKER_USERNAME }}/${{ github.event.repository.name.lowercase }}:test
+  LATEST_TAG: ${{ secrets.DOCKER_USERNAME }}/${{ github.event.repository.name.lowercase }}:latest
 
 jobs:
 
