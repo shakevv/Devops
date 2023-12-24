@@ -70,7 +70,7 @@ jobs:
 
       - name: Install Project Dependencies
         run: |
-          python3 -m pip install src/requirements.txt
+          python3 -r pip install src/requirements.txt
       
       - name: Run Unit Tests
         run: |
