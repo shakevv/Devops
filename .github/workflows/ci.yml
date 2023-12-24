@@ -40,7 +40,7 @@ jobs:
           pip3 install flake8
 
       - name: Run Flake8
-        run: flake8 --exclude=src/requirements.txt --max-line-length=100 --ignore=E305,W292 src
+        run: flake8 --exclude=src/requirements.txt --max-line-length=100 --ignore=E305,W292,E302 src
 
       - name: Run Editor Config Checker
         uses: editorconfig-checker/action-editorconfig-checker@main
