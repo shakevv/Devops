@@ -103,7 +103,8 @@ jobs:
       - name: Test Image
         run: |
           docker run --rm --name test_container ${{ env.TEST_TAG }};
-          while ![ docker ps -a | grep -q "test_container" ]; do
+          while ![ $(docker ps -a | grep -q test_container) ]; do
+            sleep 1;
             continue;
           done
           docker stop $(docker ps -q);
