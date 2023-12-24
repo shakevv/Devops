@@ -94,7 +94,7 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
 
-      - name: Build and Export to Docker
+      - name: Build and Test Image Locally
         uses: docker/build-push-action@v5
         with:
           load: true
@@ -102,9 +102,13 @@ jobs:
 
       - name: Test Image
         run: |
-          docker run --rm ${{ env.TEST_TAG }}  
+          docker run --rm --name test_container ${{ env.TEST_TAG }};
+          while ![ docker ps -a | grep -q "test_container" ]; do
+            continue;
+          done
+          docker stop $(docker ps -q);
 
-      - name: Build and push
+      - name: Build and push to Dockerhub
         uses: docker/build-push-action@v5
         with:
           push: true
