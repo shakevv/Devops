@@ -103,7 +103,7 @@ jobs:
       - name: Test Image
         run: |
           docker run --rm --name test_container ${{ env.TEST_TAG }};
-          while ![ $(docker ps -a | grep -q test_container) ]; do
+          while ![ "$( docker container inspect -f '{{.State.Running}}' test_container )" = "true" ]; do
             sleep 1;
             continue;
           done
