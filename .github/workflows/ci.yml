@@ -18,6 +18,11 @@ jobs:
   snyk-dependencies-vulnerability-scan-and-sast:
     runs-on: ubuntu-latest
 
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -125,7 +130,7 @@ jobs:
         run: |
           python src/app_test.py
 
-          
+
   docker-push:
     if: github.event.pull_request.merged == true
     needs: [unit-testing, code-style-check]
