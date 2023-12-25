@@ -15,12 +15,29 @@ env:
 
 jobs:
 
+  code-vulnerability-scan:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@master
+      - name: Run Snyk to check for vulnerabilities
+        uses: snyk/actions/python@master
+        continue-on-error: true # To make sure that SARIF upload gets called
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --sarif-file-output=snyk.sarif
+      - name: Upload result to GitHub Code Scanning
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: snyk.sarif
+
   code-style-check: 
     runs-on: ubuntu-latest
 
-    permissions:
-      contents: read
-      packages: write
+    # permissions:
+    #   contents: read
+    #   packages: write
 
     steps:
       - name: Checkout
@@ -40,7 +57,7 @@ jobs:
           pip3 install flake8
 
       - name: Run Flake8
-        run: flake8 --exclude=src/requirements.txt --max-line-length=100 --ignore=E305,W292,E302 src
+        run: flake8 src
 
       - name: Run Editor Config Checker
         uses: editorconfig-checker/action-editorconfig-checker@main
@@ -78,6 +95,7 @@ jobs:
           python src/app_test.py
 
   docker-push:
+    if: github.event.pull_request.merged == true
     needs: [unit-testing, code-style-check]
     runs-on: ubuntu-latest
 
