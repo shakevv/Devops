@@ -1,0 +1,4 @@
+[flake8]
+exclude=src/requirements.txt
+max-line-length=100
+ignore=E305,W292,E302
