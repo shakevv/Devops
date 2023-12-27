@@ -87,7 +87,7 @@ jobs:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           command: test
-          args: --severity-threshold=high --file=/src/requirements.txt --package-manager=pip --command=python3 -- --allow-missing
+          args: --severity-threshold=high --file=src/requirements.txt --package-manager=pip --command=python3 -- --allow-missing
       - name: Run Snyk test with continue on error
         uses: snyk/actions/python@master
         # if: github.event.pull_request.merged != true
