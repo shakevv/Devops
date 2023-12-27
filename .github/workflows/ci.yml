@@ -1,11 +1,11 @@
-name: Build and Push Docker Image to Docker Hub
+name: CI
 
 on:
   push:
     branches:
       - '**'
-
   pull_request:
+    types: [opened, reopened, closed]
     branches:
       - main
 
@@ -14,127 +14,120 @@ env:
   LATEST_TAG: ${{ secrets.DOCKER_USERNAME }}/devops:latest
 
 jobs:
-
   code-style-check: 
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Set up Python
         uses: actions/setup-python@v4
         with:  
           python-version: 3.12
-
       - name: Upgrade Pip
         run: |
           python -m pip install --upgrade pip
-
       - name: Install Code Style Dependencies
         run: |
           pip3 install flake8
-
       - name: Run Flake8
         run: flake8 src
-
       - name: Run Editor Config Checker
         uses: editorconfig-checker/action-editorconfig-checker@main
       - run: editorconfig-checker
-
-      - uses: actions/setup-node@v4
-        
+      - uses: actions/setup-node@v4   
       - name: Run Markdown Lint
         run: |
           npm i -g cli-markdown
           md README.md
 
-
   unit-testing:
     runs-on: ubuntu-latest
-
     permissions:
       contents: read
       packages: write
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Set up Python
         uses: actions/setup-python@v4
         with:  
           python-version: 3.12
-
       - name: Install Project Dependencies
         run: |
-          pip install -r src/requirements.txt
-      
+          pip install -r src/requirements.txt    
       - name: Run Unit Tests
         run: |
           python src/app_test.py
 
-
   snyk-dependencies-vulnerability-scan-and-sast:
+    if: github.event.pull_request.merged != true
     runs-on: ubuntu-latest
-
     permissions:
       security-events: write
       actions: read
       contents: read
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Set up Python
         uses: actions/setup-python@v4
         with:  
           python-version: 3.12
-
       - name: Upgrade Pip
         run: |
           python -m pip install --upgrade pip
-
       - name: Install Project Dependencies
         run: |
           pip install -r src/requirements.txt
-
         #scan for dependency vulnerabilities
-      - name: Run Snyk test
+      - name: Run Snyk test without continue on error
         uses: snyk/actions/node@master
+        if: github.event.pull_request.merged == true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          command: test
+      - name: Run Snyk test with continue on error
+        uses: snyk/actions/node@master
+        if: github.event.pull_request.merged != true
         continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           command: test --sarif
           args: --sarif-file-output=snyk_test.sarif
-
         #sast
-      - name: Run Snyk code test
+      - name: Run Snyk code test without continue on error
         uses: snyk/actions/node@master
+        if: github.event.pull_request.merged == true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          command: code test 
+      - name: Run Snyk code test with continue on
+        uses: snyk/actions/node@master
+        if: github.event.pull_request.merged != true
         continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           command: code test --sarif
-          args: --sarif-file-output=snyk_code_test.sarif
-      
+          args: --sarif-file-output=snyk_code_test.sarif     
         #create reports without stopping the job if problem occurs on push to feature branch
       - name: Create SARIF directory and move SARIF files
+        if: github.event.pull_request.merged != true
         run: |
           mkdir sarif_files &&
           mv snyk_test.sarif snyk_code_test.sarif sarif_files/
-
       - name: Upload result to GitHub Code Scanning
         uses: github/codeql-action/upload-sarif@v2
+        if: github.event.pull_request.merged != true
         with:
           sarif_file: sarif_files
 
   database_test:
     needs: [unit-testing, code-style-check, snyk-dependencies-vulnerability-scan-and-sast]
     runs-on: ubuntu-latest
-
     services:
       postgres:
         image: postgres
@@ -147,7 +140,6 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-
     steps:
       - uses: actions/checkout@v2
       - uses: joshuaavalon/flyway-action@v3.0.0
@@ -158,54 +150,51 @@ jobs:
           password: password
       - run: echo 'testing db migrations'
 
-
-  docker-push:
+  docker-img-test-and-report:
     needs: [database_test]
     runs-on: ubuntu-latest
-
     permissions:
       security-events: write
       contents: read
       packages: write
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Build an image from Dockerfile
         run: |
           docker build -t ${{ env.TEST_TAG }} .
-
       - name: Run Trivy vulnerability scanner on test docker image
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: '${{ env.TEST_TAG }}'
           format: 'sarif'
           output: 'trivy-results.sarif'
-
         #upload trivy report to github
-      - name: Upload Trivy scan results to GitHub Security tab
+      - name: Upload Trivy scan results to GitHub Security tab 
         uses: github/codeql-action/upload-sarif@v2
-        if: always()
+        if: always() && github.event.pull_request.merged != true
         with:
           sarif_file: 'trivy-results.sarif'
-
       - name: Run Test Image
         run: |
           docker run -d --rm --name test_container ${{ env.TEST_TAG }} && docker ps && docker kill $(docker ps -q)
 
+  docker-build-and-push-img:
+    if: github.event.pull_request.merged == true && github.ref_name == 'main'
+    needs: [docker-img-test-and-report]
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
       - name: Login to DockerHub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
-
-      # - name: Build and Test Image Locally
-      #   uses: docker/build-push-action@v5
-      #   with:
-      #     load: true
-      #     tags: ${{ env.TEST_TAG }}
-
       - name: Build and Push to Dockerhub
         uses: docker/build-push-action@v5
         with:
