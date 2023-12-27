@@ -87,31 +87,32 @@ jobs:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           command: test
+          args: --severity-threshold=high
       - name: Run Snyk test with continue on error
-        uses: snyk/actions/node@master
+        uses: snyk/actions/python@master
         if: github.event.pull_request.merged != true
         continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
-          command: test --sarif
+          command: test
           args: --sarif-file-output=snyk_test.sarif
         #sast
       - name: Run Snyk code test without continue on error
-        uses: snyk/actions/node@master
+        uses: snyk/actions/python@master
         if: github.event.pull_request.merged == true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           command: code test 
       - name: Run Snyk code test with continue on error
-        uses: snyk/actions/node@master
+        uses: snyk/actions/python@master
         if: github.event.pull_request.merged != true
         continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
-          command: code test --sarif
+          command: code test
           args: --sarif-file-output=snyk_code_test.sarif     
         #create reports without stopping the job if problem occurs on push to feature branch
       - name: Create SARIF directory and move SARIF files
