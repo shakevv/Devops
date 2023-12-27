@@ -79,52 +79,43 @@ jobs:
       - name: Install Project Dependencies
         run: |
           pip install -r src/requirements.txt
-        #scan for dependency vulnerabilities
-      # - name: Run Snyk test without continue on error
-      #   uses: snyk/actions/python@master
-      #   if: github.event.pull_request.merged != true
-      #   env:
-      #     SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-      #   with:
-      #     command: test
-      #     args: --severity-threshold=high --file=src/requirements.txt --package-manager=pip --command=python3 -- --allow-missing
-      - name: Run Snyk test with continue on error
+      - name: Run Snyk test to make dependency vulnerability report
         uses: snyk/actions/python@master
-        # if: github.event.pull_request.merged != true
         continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           command: test --sarif
           args: --sarif-file-output=snyk_test.sarif --file=src/requirements.txt --package-manager=pip --command=python3 -- --allow-missing
-        #sast
-      - name: Run Snyk code test without continue on error
+      - name: Run Snyk code test to make sast report
         uses: snyk/actions/python@master
-        # if: github.event.pull_request.merged == true
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        with:
-          command: code test 
-      - name: Run Snyk code test with continue on error
-        uses: snyk/actions/python@master
-        if: github.event.pull_request.merged != true
         continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           command: code test --sarif
-          args: --sarif-file-output=snyk_code_test.sarif     
-        #create reports without stopping the job if problem occurs on push to feature branch
+          args: --sarif-file-output=snyk_code_test.sarif
       - name: Create SARIF directory and move SARIF files
-        if: github.event.pull_request.merged != true
         run: |
           mkdir sarif_files &&
           mv snyk_test.sarif snyk_code_test.sarif sarif_files/
       - name: Upload result to GitHub Code Scanning
         uses: github/codeql-action/upload-sarif@v2
-        if: github.event.pull_request.merged != true
         with:
-          sarif_file: sarif_files
+          sarif_file: sarif_files 
+      - name: Run Snyk test for high severity treshold or higher
+        uses: snyk/actions/python@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          command: test
+          args: --severity-threshold=high --file=src/requirements.txt --package-manager=pip --command=python3 -- --allow-missing
+      - name: Run Snyk code test for sast problems
+        uses: snyk/actions/python@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          command: code test 
 
   database_test:
     needs: [unit-testing, code-style-check, snyk-dependencies-vulnerability-scan-and-sast]
@@ -152,7 +143,7 @@ jobs:
       - run: echo 'testing db migrations'
 
   docker-img-test-and-report:
-    needs: [database_test]
+    needs: [unit-testing, code-style-check, snyk-dependencies-vulnerability-scan-and-sast]
     runs-on: ubuntu-latest
     permissions:
       security-events: write
@@ -170,7 +161,6 @@ jobs:
           image-ref: '${{ env.TEST_TAG }}'
           format: 'sarif'
           output: 'trivy-results.sarif'
-        #upload trivy report to github
       - name: Upload Trivy scan results to GitHub Security tab 
         uses: github/codeql-action/upload-sarif@v2
         if: always() && github.event.pull_request.merged != true
@@ -182,7 +172,7 @@ jobs:
 
   docker-build-and-push-img:
     if: github.event.pull_request.merged == true
-    needs: [docker-img-test-and-report]
+    needs: [database_test, docker-img-test-and-report]
     runs-on: ubuntu-latest
     permissions:
       security-events: write
@@ -201,6 +191,3 @@ jobs:
         with:
           push: true
           tags: ${{ env.LATEST_TAG }}
-
-
-          # --file=req.txt --package-manager=pip
