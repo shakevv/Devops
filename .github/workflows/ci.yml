@@ -81,13 +81,13 @@ jobs:
           pip install -r src/requirements.txt
         #scan for dependency vulnerabilities
       - name: Run Snyk test without continue on error
-        uses: snyk/actions/python-3.10@master
+        uses: snyk/actions/python@master
         if: github.event.pull_request.merged != true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           command: test
-          args: --severity-threshold=high --file=requirements.txt --package-manager=pip --command=python3 -- --allow-missing
+          args: --severity-threshold=high --file=./requirements.txt --package-manager=pip --command=python3 -- --allow-missing
       - name: Run Snyk test with continue on error
         uses: snyk/actions/python@master
         if: github.event.pull_request.merged != true
