@@ -95,7 +95,7 @@ jobs:
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
-          command: test
+          command: test --sarif
           args: --sarif-file-output=snyk_test.sarif
         #sast
       # - name: Run Snyk code test without continue on error
@@ -112,7 +112,7 @@ jobs:
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
-          command: code test
+          command: code test --sarif
           args: --sarif-file-output=snyk_code_test.sarif     
         #create reports without stopping the job if problem occurs on push to feature branch
       - name: Create SARIF directory and move SARIF files
