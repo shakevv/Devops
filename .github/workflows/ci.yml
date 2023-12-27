@@ -202,4 +202,4 @@ jobs:
           tags: ${{ env.LATEST_TAG }}
 
 
-          --file=req.txt --package-manager=pip
+          # --file=req.txt --package-manager=pip
