@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - '**'
+      - '!main'
   pull_request:
     types: [opened, reopened, closed]
     branches:
@@ -60,7 +61,6 @@ jobs:
           python src/app_test.py
 
   snyk-dependencies-vulnerability-scan-and-sast:
-    if: github.event.pull_request.merged != true
     runs-on: ubuntu-latest
     permissions:
       security-events: write
@@ -104,7 +104,7 @@ jobs:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           command: code test 
-      - name: Run Snyk code test with continue on
+      - name: Run Snyk code test with continue on error
         uses: snyk/actions/node@master
         if: github.event.pull_request.merged != true
         continue-on-error: true
@@ -180,7 +180,7 @@ jobs:
           docker run -d --rm --name test_container ${{ env.TEST_TAG }} && docker ps && docker kill $(docker ps -q)
 
   docker-build-and-push-img:
-    if: github.event.pull_request.merged == true && github.ref_name == 'main'
+    if: github.event.pull_request.merged == true
     needs: [docker-img-test-and-report]
     runs-on: ubuntu-latest
     permissions:
