@@ -11,16 +11,15 @@ on:
       - main
 
 jobs:
-  git-leaks:
-      name: secrets detection
-      runs-on: ubuntu-latest
-      steps:
-        - uses: actions/checkout@v3
-          with:
-            fetch-depth: 0
-        - uses: gitleaks/gitleaks-action@v2
-          env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  secrets-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   code-style-check: 
     runs-on: ubuntu-latest
@@ -67,8 +66,8 @@ jobs:
         run: |
           python src/app_test.py
 
-  snyk-dependencies-vulnerability-scan-and-sast:
-    needs: [git-leaks, code-style-check, unit-testing]
+  sca-sast-scan-and-reporting:
+    needs: [secrets-check, code-style-check, unit-testing]
     runs-on: ubuntu-latest
     permissions:
       security-events: write
@@ -125,8 +124,8 @@ jobs:
         with:
           command: code test 
 
-  database_test:
-    needs: [git-leaks, code-style-check, unit-testing]
+  database-migrations-test:
+    needs: [secrets-check, code-style-check, unit-testing]
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -151,7 +150,7 @@ jobs:
       - run: echo 'testing db migrations'
 
   docker-img-test-and-report:
-    needs: [git-leaks, code-style-check, unit-testing]
+    needs: [secrets-check, code-style-check, unit-testing]
     runs-on: ubuntu-latest
     permissions:
       security-events: write
@@ -188,7 +187,7 @@ jobs:
 
   docker-build-and-push-img:
     if: github.event.pull_request.merged == true
-    needs: [snyk-dependencies-vulnerability-scan-and-sast, database_test, docker-img-test-and-report]
+    needs: [sca-sast-scan-and-reporting, database-migrations-test, docker-img-test-and-report]
     runs-on: ubuntu-latest
     permissions:
       security-events: write
