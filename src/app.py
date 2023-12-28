@@ -1,7 +1,6 @@
 import socket
 from flask import Flask
 app = Flask(__name__)
-MY_TEST_SECRET="OgZRRECdDoiE90Um"
 
 @app.route('/')
 def hello_world():

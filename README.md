@@ -1,6 +1,6 @@
 # Modern Devops Practices Course Project
 
-The project is CI pipeline which creates Docker image of Python application and pushes it to Dockerhub. The pipeline is triggered on push to a branch which is different from the main branch, on opened Pull Request and on Merged Pull Request to the main branch. Depending on the github event different jobs are executed. The jobs are: 
+The project is a GitHub Actions workflow that builds a Docker image of Python application and pushes it to Dockerhub. The pipeline is triggered on push to a branch which is different from the main branch, on opened Pull Request and on Merged Pull Request to the main branch. Depending on the github event different jobs are executed. The jobs are: 
  - secrets-check 
  - code-style-check 
  - unit-testing 
@@ -9,13 +9,13 @@ The project is CI pipeline which creates Docker image of Python application and 
  - docker-img-test-and-report 
  - docker-build-and-push-img (runs only on merged PR to the main branch)
 
- ## Performed tasks during the pipeline execution:
+ ## Performed tasks:
 
- ### General Pipeline Info:
+ ### Pipeline
 - Create a GitHub Actions workflow that builds a Docker image for our application
 - Run jobs in parallel
 - Implement job dependency
-- Implement a new Github workflow at Merged Pull Request
+- Implement a different Github workflow at Merged Pull Request
 - Have Dockerfile for optimized Docker image size
 
 ### Style (code-style-check job)
@@ -25,10 +25,10 @@ The project is CI pipeline which creates Docker image of Python application and 
 
 ### Security testing (secrets-check, unit-testing, sca-sast-scan-and-reporting jobs)
 - Run unit tests
-- Make Software Composition Analysis (SCA) scan on the application code with `Snyk`
-- Make Static Application Security Testing (SAST) scan on the application code with `Snyk`
+- Make Software Composition Analysis (SCA) scan on the application code with `snyk`
+- Make Static Application Security Testing (SAST) scan on the application code with `snyk`
 - Upload reports to Github for problems found during the SCA and SAST scans
-- Stop the pipeline if any problems are found but the reports contain full information for the vulnerabilities
+- Stop the pipeline if any problems are found
 - Check for hardcoded secrets with `gitleaks` and stop the pipeline if any hardcoded secret is found
 
 ### Database migrations (database-migrations-test job)
@@ -36,7 +36,7 @@ The project is CI pipeline which creates Docker image of Python application and 
 
 ### Containerization (docker-img-test-and-report, docker-build-and-push-img jobs)
 - Create test image for the Python application in the src/ directory. We have a Dockerfile and use ubuntu as a base image
-- Scan the built Docker image with `Trivy`
+- Scan the built Docker image with `trivy`
 - Upload scan report to Github
 - Stop pipeline if high severity problems are found
 - Create test container from the image
