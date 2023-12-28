@@ -10,14 +10,9 @@ on:
     branches:
       - main
 
-env:
-  TEST_TAG: ${{ secrets.DOCKER_USERNAME }}/devops:test
-  LATEST_TAG: ${{ secrets.DOCKER_USERNAME }}/devops:latest
-
 jobs:
   git-leaks:
       name: secrets detection
-      if: ${{ github.event_name == 'pull_request' || (github.event_name == 'push' && !contains( github.event.head_commit.message, 'Merge pull request')) }}
       runs-on: ubuntu-latest
       steps:
         - uses: actions/checkout@v3
@@ -73,6 +68,7 @@ jobs:
           python src/app_test.py
 
   snyk-dependencies-vulnerability-scan-and-sast:
+    needs: [git-leaks, code-style-check, unit-testing]
     runs-on: ubuntu-latest
     permissions:
       security-events: write
@@ -91,7 +87,7 @@ jobs:
       - name: Install Project Dependencies
         run: |
           pip install -r src/requirements.txt
-      - name: Run Snyk test to make dependency vulnerability report
+      - name: Run Snyk test to Create Dependency Vulnerability Report
         uses: snyk/actions/python@master
         continue-on-error: true
         env:
@@ -99,7 +95,7 @@ jobs:
         with:
           command: test --sarif
           args: --sarif-file-output=snyk_test.sarif --file=src/requirements.txt --package-manager=pip --command=python3 -- --allow-missing
-      - name: Run Snyk code test to make sast report
+      - name: Run Snyk code test to Create SAST Report
         uses: snyk/actions/python@master
         continue-on-error: true
         env:
@@ -107,22 +103,22 @@ jobs:
         with:
           command: code test --sarif
           args: --sarif-file-output=snyk_code_test.sarif
-      - name: Create SARIF directory and move SARIF files
+      - name: Create SARIF Directory and Move SARIF Files
         run: |
           mkdir sarif_files &&
           mv snyk_test.sarif snyk_code_test.sarif sarif_files/
-      - name: Upload result to GitHub Code Scanning
+      - name: Upload Scan Results to GitHub Code Scanning
         uses: github/codeql-action/upload-sarif@v2
         with:
           sarif_file: sarif_files 
-      - name: Run Snyk test for high severity treshold or higher
+      - name: Run Snyk test for High Severity Dependency Treshold or Higher
         uses: snyk/actions/python@master
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           command: test
           args: --severity-threshold=high --file=src/requirements.txt --package-manager=pip --command=python3 -- --allow-missing
-      - name: Run Snyk code test for sast problems
+      - name: Run Snyk code test for SAST Problems
         uses: snyk/actions/python@master
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
@@ -130,7 +126,7 @@ jobs:
           command: code test 
 
   database_test:
-    needs: [unit-testing, code-style-check, snyk-dependencies-vulnerability-scan-and-sast, git-leaks]
+    needs: [git-leaks, code-style-check, unit-testing]
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -155,41 +151,50 @@ jobs:
       - run: echo 'testing db migrations'
 
   docker-img-test-and-report:
-    needs: [unit-testing, code-style-check, snyk-dependencies-vulnerability-scan-and-sast, git-leaks]
+    needs: [git-leaks, code-style-check, unit-testing]
     runs-on: ubuntu-latest
     permissions:
       security-events: write
       contents: read
       packages: write
+    env:
+      TEST_TAG: ${{ secrets.DOCKER_USERNAME }}/devops:test
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Build an image from Dockerfile
+      - name: Build an Image From Dockerfile
         run: |
           docker build -t ${{ env.TEST_TAG }} .
-      - name: Run Trivy vulnerability scanner on test docker image
+      - name: Run Trivy Vulnerability Scanner on Test Docker Image and Create Report
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: '${{ env.TEST_TAG }}'
           format: 'sarif'
           output: 'trivy-results.sarif'
-      - name: Upload Trivy scan results to GitHub Security tab 
+      - name: Upload Trivy Scan Results to GitHub Security Tab 
         uses: github/codeql-action/upload-sarif@v2
         if: always() && github.event.pull_request.merged != true
         with:
           sarif_file: 'trivy-results.sarif'
-      - name: Run Test Image
+      - name: Run Trivy Vulnerability Scanner for Critical Problems
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: '${{ env.TEST_TAG }}'
+          severity: 'CRITICAL'
+      - name: Run Test Docker Image
         run: |
           docker run -d --rm --name test_container ${{ env.TEST_TAG }} && docker ps && docker kill $(docker ps -q)
 
   docker-build-and-push-img:
     if: github.event.pull_request.merged == true
-    needs: [database_test, docker-img-test-and-report]
+    needs: [snyk-dependencies-vulnerability-scan-and-sast, database_test, docker-img-test-and-report]
     runs-on: ubuntu-latest
     permissions:
       security-events: write
       contents: read
       packages: write
+    env:
+      LATEST_TAG: ${{ secrets.DOCKER_USERNAME }}/devops:latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
