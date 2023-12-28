@@ -181,6 +181,7 @@ jobs:
         with:
           image-ref: '${{ env.TEST_TAG }}'
           severity: 'CRITICAL'
+          exit-code: 1
       - name: Run Test Docker Image
         run: |
           docker run -d --rm --name test_container ${{ env.TEST_TAG }} && docker ps && docker kill $(docker ps -q)
