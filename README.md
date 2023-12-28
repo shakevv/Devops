@@ -40,4 +40,4 @@ The project is a GitHub Actions workflow that builds a Docker image of Python ap
 - Upload scan report to Github
 - Stop pipeline if high severity problems are found
 - Create test container from the image
-- Create image and publish it to DockerHub
+- Create final image and publish it to DockerHub
