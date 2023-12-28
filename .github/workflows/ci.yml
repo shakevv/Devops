@@ -129,7 +129,7 @@ jobs:
           command: code test 
 
   database_test:
-    needs: [unit-testing, code-style-check, snyk-dependencies-vulnerability-scan-and-sast]
+    needs: [unit-testing, code-style-check, snyk-dependencies-vulnerability-scan-and-sast, git-leaks]
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -154,7 +154,7 @@ jobs:
       - run: echo 'testing db migrations'
 
   docker-img-test-and-report:
-    needs: [unit-testing, code-style-check, snyk-dependencies-vulnerability-scan-and-sast]
+    needs: [unit-testing, code-style-check, snyk-dependencies-vulnerability-scan-and-sast, git-leaks]
     runs-on: ubuntu-latest
     permissions:
       security-events: write
