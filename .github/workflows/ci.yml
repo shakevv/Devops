@@ -42,10 +42,6 @@ jobs:
         uses: editorconfig-checker/action-editorconfig-checker@main
       - run: editorconfig-checker
       - uses: actions/setup-node@v4   
-      - name: Run Markdown Lint
-        run: |
-          npm i -g cli-markdown
-          md README.md
 
   unit-testing:
     runs-on: ubuntu-latest

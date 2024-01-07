@@ -1,5 +1,7 @@
 # Modern Devops Practices Course Project
 
+## CI pipeline + deploy the image to local Kubernetes cluster
+
 The project is a GitHub Actions workflow that builds a Docker image of Python application and pushes it to Dockerhub. The pipeline is triggered on push to a branch which is different from the main branch, on opened Pull Request and on Merged Pull Request to the main branch. Depending on the github event different jobs are executed. The jobs are: 
  - secrets-check 
  - code-style-check 
@@ -21,7 +23,6 @@ The project is a GitHub Actions workflow that builds a Docker image of Python ap
 ### Style (code-style-check job)
 - Check code style & lint with `flake8`
 - Check .editorconfig with `editorconfig-checker`
-- Check makrdown files using `markdownlint-cli`
 
 ### Security testing (secrets-check, unit-testing, sca-sast-scan-and-reporting jobs)
 - Run unit tests
@@ -41,3 +42,12 @@ The project is a GitHub Actions workflow that builds a Docker image of Python ap
 - Stop pipeline if high severity problems are found
 - Create test container from the image
 - Create final image and publish it to DockerHub
+
+
+## Deploy the image to local Kubernetes cluster
+
+- `kubectl create deployment myapp --image=shakevv/devops:latest --replicas=2` creates a deployment with two pods created from our image 
+
+- `kubectl expose deployment/myapp --type="NodePort" --port 5000` exposes the deployment outside the kubernetes cluster
+
+- `kubectl get all` to find the port to which the deployment is exposed
