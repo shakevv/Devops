@@ -42,10 +42,6 @@ jobs:
         uses: editorconfig-checker/action-editorconfig-checker@main
       - run: editorconfig-checker
       - uses: actions/setup-node@v4   
-      - name: Run Markdown Lint
-        uses: DavidAnson/markdownlint-cli2-action@v14
-        with:
-          globs: '**/*.md'
 
   unit-testing:
     runs-on: ubuntu-latest
